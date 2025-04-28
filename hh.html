@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/site.css">
+    <title>Document</title>
+</head>
+<style>
+.marquee {
+    --marquee--colour:#205080;
+    --marquee--repeat-count: 6;
+    --marquee--base-duration: 1s;
+    --marquee--repeat-size: calc(100% / var(--marquee--repeat-count));
+    --marquee--double-size: calc(var(--marquee--repeat-size) * 2);
+    --marquee--duration: calc(
+        var(--marquee--base-duration) * var(--char-count, 20)
+    );
+    overflow: hidden;
+    width: 110%;
+   
+    mix-blend-mode: screen;
+    transform: rotate(-5deg);
+    background: var(--marquee--colour);
+    color: #d9e2eb;
+    height: 100%;
+    
+  }
+  .marquee:nth-child(even) {
+    --marquee--direction: -1;
+    transform: rotate(5deg);
+    background: #00000000;
+    color: var(--marquee--colour);
+  }
+  .marquee p {
+    transform: translateY(-0.05em);
+    margin: 0;
+    display: flex;
+    gap: 0.5em;
+    line-height: 1.1;
+    font-size: clamp(2.5rem, 12vw, 6.2rem);
+    font-family: "Dela Gothic One", sans-serif;
+    /* An empty psuedo element creates a gap after the last element */
+  }
+  .marquee p::after {
+    content: "";
+    transform: translateY(0.175em);
+  }
+  .marquee p::before {
+    content: "";
+  }
+  
+  .marquee--inner {
+    width: max-content;
+    display: flex;
+    text-transform: uppercase;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .marquee--inner {
+      animation: marquee var(--marquee--duration) infinite linear, reduce-marquee var(--marquee--duration) infinite linear paused;
+      animation-composition: add;
+    }
+    .marquee--inner:hover {
+      animation-play-state: running;
+    }
+  }
+  
+  @keyframes marquee {
+    from {
+      transform: translateX(calc( 		(-1 * var(--marquee--double-size)) - 			(var(--marquee--double-size) * var(--marquee--direction, 1)) 	));
+    }
+    to {
+      transform: translateX(calc(var(--marquee--double-size) * -1));
+    }
+  }
+  @keyframes reduce-marquee {
+    from {
+      transform: translateX(calc(var(--marquee--repeat-size) * var(--marquee--direction, 1)));
+    }
+    to {
+      transfrom: translateX(calc(var(--marquee--double-size) * -1));
+    }
+  }
+  body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+   
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.25);
+ 
+  }
+  
+  body,
+  html {
+    height: fit-content;
+    margin: 0;
+  }
+  
+  .marquees {
+    align-content: center;
+    height: 50%;
+    display: grid;
+    gap: 5vw;
+    
+  }
+  
+
+  </style>
+<body>
+   
+
+<div class='marquees'>
+	<section class='marquee' style='--char-count: 28'>
+		<div class='marquee--inner'>
+			<p>我超，這圖真美</p>
+			<p aria-hidden='true'>我超，這圖真美</p>
+			<p aria-hidden='true'>我超，這圖真美</p>
+			<p aria-hidden='true'>我超，這圖真美</p>
+			<p aria-hidden='true'>我超，這圖真美</p>
+						<p aria-hidden='true'>我超，這圖真美</p>
+		</div>
+	</section>
+
+	<div class='marquee' style='--char-count: 30'>
+		<div class='marquee--inner'>
+			<p>鍾家又則懂藝術</p>
+			<p aria-hidden='true'>鍾家又則懂藝術</p>
+			<p aria-hidden='true'>鍾家又則懂藝術</p>
+			<p aria-hidden='true'>鍾家又則懂藝術</p>
+			<p aria-hidden='true'>鍾家又則懂藝術</p>
+						<p aria-hidden='true'>鍾家又則懂藝術</p>
+		</div>
+	</div>
+
+	<section class='marquee' style='--char-count: 22'>
+		<div class='marquee--inner'>
+			<p>侑新哥哥都說讚</p>
+			<p aria-hidden='true'>侑新哥哥都說讚</p>
+			<p aria-hidden='true'>侑新哥哥都說讚</p>
+			<p aria-hidden='true'>侑新哥哥都說讚</p>
+			<p aria-hidden='true'>侑新哥哥都說讚</p>
+						<p aria-hidden='true'>侑新哥哥都說讚</p>
+		</div>
+	</section>
+
+	<section class='marquee' style='--char-count: 24'>
+		<div class='marquee--inner'>
+			<p>Art is Elgant</p>
+			<p aria-hidden='true'>Art is Elgant</p>
+			<p aria-hidden='true'>Art is Elgant</p>
+			<p aria-hidden='true'>Art is Elgant</p>
+			<p aria-hidden='true'>Art is Elgant</p>
+						<p aria-hidden='true'>Art is Elgant</p>
+		</div>
+	</section>
+</div>
+
+</body>
+</html>

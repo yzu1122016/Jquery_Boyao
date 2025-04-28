@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="./jquery-3.7.1.min.js"></script>
+  <script src="./index.js"></script>
+  <title>流動廁所</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <style>
+    body  {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #89f7fe, #66a6ff);
+      
+    }
+    header, footer {
+      text-align: center;
+      padding: 20px;
+      opacity: 100%;
+      background-color: rgb(255, 255, 255);
+      font-size: 1.2rem;
+    
+            color: #205080;
+            text-decoration-color: #205080;
+            transition: 0.3s;
+    }
+    .ext-rainjs{
+  position:fixed;
+ 
+  font-weight: 0;
+  font-family: Arial, sans-serif;
+ 
+
+ 
+  z-index: -11;
+}
+
+    /* 優化幻燈片容器 */
+    .slider {
+      position: relative;
+      overflow: hidden;
+      object-fit: cover;
+      width: 100%;
+      max-width: 1200px;
+      margin: 20px auto;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      background-color: #2a1d1d; /* 添加背景色以免圖片載入時顯示空白 */
+    }
+    /* 修復軌道比例計算 */
+    .slider-track {
+      display: flex;
+      width: calc(100% * 10); /* 10個幻燈片 */
+      transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 添加緩動效果 */
+    }
+    /* 幻燈片樣式 */
+    .slide {
+      position: relative;
+      flex: 0 0 10%; /* 修正為10%而不是100% */
+     
+      height: 500px;
+    }
+    .slide-content {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #000; /* 圖片底色 */
+    }
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; 
+      display: block;
+      transition: transform 0.5s ease; /* 添加圖片縮放效果 */
+    }
+    .slide:hover img {
+      transform: scale(0.8); /* 懸停時圖片微縮放 */
+    }
+    /* 改進圖片說明樣式及動畫 */
+    .caption {
+      position: absolute;
+      bottom: 10%;
+      left: 5%;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 12px 24px;
+      border-radius: 10px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+      z-index: 2;
+      font-weight: bold;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .slide:hover .caption {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* 改進導航按鈕 */
+    .slider-buttons {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+      padding: 0 0px;
+      z-index: 10;
+      pointer-events: none; /* 讓按鈕本身不阻擋內容 */
+    }
+    .slider-button {
+      background: rgba(255,255,255,0.8);
+      border: none;
+      font-size: 24px;
+      padding: 15px 25px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s;
+      pointer-events: auto; /* 確保按鈕可點擊 */
+      color: #333;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    }
+    .slider-button:hover {
+      background: rgba(255,255,255,1);
+      transform: scale(1.1);
+    }
+    .slider-button:active {
+      transform: scale(0.95);
+    }
+
+    /* 添加底部指示器 */
+    .slider-indicators {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      z-index: 10;
+    }
+    .slider-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: rgba(255,255,255,0.5);
+      border: 2px solid rgba(255,255,255,0.8);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .slider-indicator:hover {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background-color: rgb(183, 218, 247);
+      border: 2px solid rgba(255,255,255,0.8);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .slider-indicator.active {
+      background-color: white;
+      transform: scale(1.2);
+    }
+
+    /* 彈幕樣式優化 */
+    .danmu-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin-right: 100%;
+      width: 100%;
+      height: 95%; /* 不要使用100%高度，避免底部過度擁擠 */
+      pointer-events: none;
+     
+      
+      z-index: 1;
+    }
+    .danmu {
+      position: absolute;
+      white-space: nowrap;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8); /* 增強文字陰影以提高可讀性 */
+      animation-name: danmu-move;
+      animation-timing-function: linear;
+      animation-iteration-count: 1;
+      padding: 5px 10px;
+  
+      border-radius: 20px;
+      background-color: rgba(0,0,0,0.3); /* 添加半透明背景以增強可讀性 */
+    }
+    @keyframes danmu-move {
+      from { transform: translateX(300%); }
+      to { transform: translateX(-100%); }
+    }
+
+    /* 載入中動畫 */
+    .slide-loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 3;
+      transition: opacity 0.3s;
+      opacity: 1; /* Start visible */
+    }
+    .loader {
+      border: 5px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 5px solid white;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 響應式設計優化 */
+    @media (max-width: 1024px) {
+      .slide {
+        height: 400px;
+      }
+    }
+    @media (max-width: 768px) {
+      .slide {
+        height: 300px;
+      }
+      .danmu {
+        font-size: 18px;
+      }
+      .caption {
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+      .slider-button {
+        font-size: 18px;
+        padding: 10px 13px;
+      }
+    }
+    
+    /* 留言區樣式 */
+    .comments {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .comments h2 {
+      margin-top: 0;
+    }
+    .comment-input {
+      margin-bottom: 20px;
+    }
+    .comment-input textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      resize: vertical;
+    }
+    .username-input {
+      margin-bottom: 10px;
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .comment-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .comment-buttons button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #66a6ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .comment-buttons button.danmu-btn {
+      background-color: #ff6666;
+    }
+    .comment-list {
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .comment-item {
+      border-top: 1px solid #ddd;
+      padding: 10px 0;
+    }
+    .comment-item .username {
+      font-weight: bold;
+      color: #66a6ff;
+      margin-right: 10px;
+    }
+    
+    /* 彈幕速度控制 */
+    .speed-control {
+      text-align: center;
+      margin: 20px 0;
+      background-color: rgba(255,255,255,0.7);
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .speed-control label {
+      margin-right: 10px;
+      font-weight: bold;
+      color: #333;
+    }
+    .speed-control input {
+      width: 200px;
+      vertical-align: middle;
+    }
+    
+    /* 切換留言區 */
+    .tab-buttons {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .tab-button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      background-color: #ddd;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .tab-button.active {
+      background-color: #66a6ff;
+      color: white;
+    }
+    .tab-button:hover {
+      background-color: #b3d4ff;
+    }
+    
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      .slide {
+        height: 300px;
+      }
+      .danmu {
+        font-size: 18px;
+      }
+      .comment-buttons {
+        flex-direction: column;
+      }
+      .comment-buttons button {
+        width: 100%;
+      }
+    }
+   /* 漢堡選單改進樣式 */
+.hamburger-menu {
+  position: fixed;
+  top: 20px;
+  right: 60px;
+  z-index: 200; /* 提高z-index確保在其他元素之上 */
+
+}
+
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 70px;
+  height: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+
+
+  z-index: 203; /* 確保在背景遮罩之上 */
+}
+.hamburger-icon:hover {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 75px;
+  height: 55px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+
+
+  z-index: 203; /* 確保在背景遮罩之上 */
+}
+.hamburger-icon span:hover {
+  display: block;
+  height: 10px;
+  width: 100%;
+  background-color: #f9f9f9;
+  border-radius: 3px;
+  transition: all 0.4s cubic-bezier(0.68, -0.6, 0.32, 1.6); /* 更平滑的動畫 */
+}
+.hamburger-icon span {
+  display: block;
+  height: 10px;
+  width: 100%;
+  background-color: #333;
+  border-radius: 3px;
+  transition: all 0.4s cubic-bezier(0.68, -0.6, 0.32, 1.6); /* 更平滑的動畫 */
+}
+
+
+/* 漢堡選單激活時的線條動畫效果 */
+.hamburger-menu.active .hamburger-icon span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 20px);
+  background-color: #0076f4;
+}
+
+.hamburger-menu.active .hamburger-icon span:nth-child(2) {
+  opacity: 0;
+  transform: translateX(45px); /* 水平滑出而不是直接消失 */
+  background-color: #f40000;
+}
+
+.hamburger-menu.active .hamburger-icon span:nth-child(3) {
+  transform: rotate(-45deg) translate(2px, -25px);
+  background-color: #0076f4;
+}
+
+/* 背景遮罩 */
+.menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 201;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.hamburger-menu.active .menu-backdrop {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 選單項容器 */
+.menu-items {
+  position: fixed;
+  top: 0;
+  right: -350px;
+  width: 280px; /* 略微縮小以顯示邊緣陰影 */
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.98);
+  padding: 80px 20px 40px;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* 更自然的滑入效果 */
+  box-shadow: -5px 0 20px rgba(0, 0, 0, 0.15);
+  overflow-y: auto; /* 內容過多時可滾動 */
+  z-index: 202;
+}
+
+.hamburger-menu.active .menu-items {
+  right: 0;
+}
+
+/* 選單項樣式改進 */
+.menu-item {
+  display: block;
+  padding: 15px 20px;
+  margin: 8px 0;
+  color: #333;
+  text-decoration: none;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 選單項漣漪效果 */
+.menu-item:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background-color: rgba(102, 166, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.5s, height 0.5s;
+  z-index: -1;
+}
+
+.menu-item:hover:before {
+  width: 300px;
+  height: 300px;
+}
+
+.menu-item:hover, .menu-item.active {
+  background-color: #66a6ff;
+  color: white;
+  transform: translateX(5px); /* 輕微位移效果 */
+}
+
+/* 為選單項添加圖標空間 */
+.menu-item i {
+  margin-right: 10px;
+  width: 20px;
+  text-align: center;
+}
+
+/* 移動裝置優化 */
+@media (max-width: 768px) {
+  .hamburger-icon {
+    width: 26px;
+    height: 18px;
+  }
+  
+  .menu-items {
+    width: 260px;
+    padding: 70px 15px 30px;
+  }
+  
+  .menu-item {
+    padding: 12px 15px;
+    font-size: 1rem;
+  }
+}
+
+/* 相簿網格 */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.album-item {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+  cursor: pointer;
+}
+
+.album-item:hover {
+  transform: translateY(-5px);
+}
+
+.album-item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.album-item .album-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 0.9rem;
+}
+
+/* 上傳頁面 */
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.upload-preview {
+  width: 100%;
+  height: 300px;
+  margin-bottom: 20px;
+  border: 2px dashed #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.upload-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+#upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#upload-form input, #upload-form textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-family: inherit;
+}
+
+.upload-button {
+  background-color: #66a6ff;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.upload-button:hover {
+  background-color: #3388ff;
+}
+
+/* 圖片大圖預覽 */
+.fullscreen-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.9);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.fullscreen-preview.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fullscreen-preview img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.close-preview {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: white;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .album-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .upload-container {
+    padding: 15px;
+  }
+}
+header h1 
+{
+  
+  text-align: start;
+  padding-left: 100px;
+ 
+}
+header .container
+{
+  text-align: start;
+  width: 100%;
+  height: 100%;
+  padding-left: 20px;
+}
+header img
+{
+  width: 5%;
+  height: 10%;
+  object-fit: cover;
+  position: absolute;
+  text-align: start;
+
+}
+#article {
+            padding: 10px 25px;
+            background-color: #b8c8d9;
+            color: #205080;
+            height:fit-content;
+            overflow: hidden;
+            opacity: 100%;
+            z-index: 1;
+        }
+
+        #ext-footer {
+          
+            bottom: 0;
+        }
+        @keyframes rotate {
+    from {
+        transform: rotate(0deg) scale(3);
+       
+    }
+
+    to {
+        transform: rotate(360deg) scale(3);
+    
+    }
+}
+
+
+.imgbg {
+    animation: rotate 5s linear infinite;
+    position: absolute;    
+     font-size:100%;
+     overflow: hidden;
+     opacity: 60%;
+    bottom: -100%;
+    z-index: 0;
+    
+
+}
+.row{
+			display: flex;
+			justify-content: space-evenly;
+			padding-bottom: 10vh;
+		}
+		.box{
+			width: 45%;
+			z-index: 1;
+		}
+		.box1{
+			width: 30%;
+            padding: 20%;
+            right: -30%;
+		}
+		.box2{
+			width: 40%;
+            height: 1000px;
+			padding-top:7.5px;
+		}
+
+		.box h1{
+			display: flex;
+			justify-content: center;
+			color: #061626;
+			
+			margin: 15px;
+		}
+
+
+
+
+		
+		.inbox_text
+		{
+			border-top:10px solid #205080;
+			border-bottom:10px solid #205080;
+			background-color:white ;
+			height: 700px;
+			padding : 15px 50px 0  ;
+            
+            overflow: hidden;
+            overflow-x: hidden;
+		}
+
+		.inbox_ifream
+		{
+			border-top:10px solid #205080;
+			border-bottom:10px solid #205080;
+			height: 60vh;
+			padding :0 ;
+            
+
+		}
+        
+        
+.grid-container {
+	display: grid;
+	gap: 500px 500px;
+	grid-template-columns: 0px 0px 0px;
+    padding-top: 50px;
+    padding-left: 50px;
+}
+.grid-container2 {
+	display: grid;
+	gap: 700px 700px;
+	grid-template-columns: 0px  0px;
+    padding-top: 100px;
+    padding-left: 200px;
+}
+.grid-container3 {
+	display: grid;
+	gap: 70px 70px ;
+	grid-template-columns: 0px  0px;
+    padding-top:300px;
+    margin: -350px;
+}
+.grid-container4 {
+	display: grid;
+	gap: 70px 70px ;
+	grid-template-columns: 0px  0px;
+    padding-top:-125px;
+    margin: -350px;
+    z-index: -1;
+}
+.grid-item {
+	padding: 2px;
+}
+
+.filter-image {
+	text-align: center;
+	width: 25vw;
+	height: 60vh;
+	object-fit: cover;
+	background: white;
+	padding: 10px 10px 15px;
+	text-align: center;
+	text-decoration: none;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+	transition: all 0.15s linear;
+	z-index: 0;
+	position: relative;
+	transform: rotate(4deg);
+   
+
+   
+}
+.filter-image1 {
+	text-align: center;
+	width: 40vw;
+	height: 60vh;
+	object-fit: cover;
+	background: rgb(13, 48, 83);
+	padding: 40px 40px 40px  40px;
+	text-align: center;
+	text-decoration: none;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+	transition: all 0.15s linear;
+	z-index: 0;
+	position: relative;
+	transform: rotate(0deg);
+}
+
+.photo1,photo2 {
+	padding: 0.1rem;
+	filter: drop-shadow(0 2px 1px darkgrey);
+	display: inline-block;
+    
+}
+
+.photo1 {
+	filter: url(#crumple-effect-1);
+}
+
+.photo2A {
+	filter: url(#crumple-effect-2);
+}
+
+.photo3A {
+	filter: url(#crumple-effect-3);
+}
+
+.photo1:hover,
+.photo2:hover,
+.photo3:hover {
+	transform: rotate(-4deg);
+    z-index: +11;
+    filter:  sepia(25%);
+}
+.photo1A:hover,
+.photo2A:hover,
+.photo3A:hover {
+	transform: rotate(-1deg);
+    z-index: +11;
+    filter: url(#crumple-effect-1);
+}
+.box-info  {
+            font-size: 14px;
+            color: #666;
+            margin: -20px;
+            overflow:auto; height: 100%; width: 120%;
+         margin-left: 0px;
+         margin-right: 20%;
+         overflow-x: hidden;
+         padding-right: 15%;
+         padding-top: 2px;
+        }
+.h1a{
+    background-color:   #205080; ;
+   z-index: 1000;
+   height: 30%;
+   width: 40%;
+}
+
+.member-info {
+    width: 33vw;
+    position: relative;
+    left: -5vw;
+}
+.member-info-title, .member-info-des {
+    text-align: center;
+    
+}
+
+.member-info-title {
+    font-weight: 900;
+
+}
+
+.paps{
+    font-size: 90px;
+    margin: 0 10vw 10vh 10vw;
+    padding-bottom: 1vh;
+    border: 10px solid #061626cc;
+    z-index: 111;
+    display: grid;
+    color: #061626;
+    background: repeating-linear-gradient(135deg, #b8c8d999 0 50px, #7393b399 50px 250px);
+    border-radius: 5vw;
+    
+}
+.ppap{
+    display: grid;
+    
+    
+}
+  </style>
+</head>
+<body>
+  <div class="ext-rainjs"></div>
+<header>
+  
+  <div class="container"><img src="./assets/FB_IMG_1734678229372_1.jpg"><h1 >人真化朗</h1></div>
+  <div class="hamburger-menu">
+    <div class="hamburger-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <nav class="menu-items">
+      <a href="#home" class="menu-item active" data-page="home">首頁</a>
+      <a href="#album" class="menu-item" data-page="album">相簿</a>
+      <a href="#upload" class="menu-item" data-page="upload">上傳</a>
+      <a href="#about" class="menu-item" data-page="about">關於</a>
+    </nav>
+  </div>
+  
+</header>
+
+<div class="slider">
+  
+    <div class="slider-track">
+      
+      <!-- 10 slides -->
+      <div class="slide" data-id="1">
+        <div class="slide-content">
+          
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/attack_dog-stay.gif" alt="圖片1" loading="lazy">
+          <div class="caption">令人印象深刻的動態狗照片</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <div class="slide" data-id="2">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/IMG_0580.jpg" alt="圖片2" loading="lazy">
+          <div class="caption">美麗的風景照</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <!-- 以下使用預留圖片 -->
+      <div class="slide" data-id="3">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/1122002.jpg" alt="圖片3" loading="lazy">
+          <div class="caption">令人驚嘆的自然風光</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <div class="slide" data-id="4">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/1122026.jpg" alt="圖片4" loading="lazy">
+          <div class="caption">迷人的都市景觀</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <div class="slide" data-id="5">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/1122016.jpg" alt="圖片5" loading="lazy">
+          <div class="caption">寧靜的海灘日落</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <div class="slide" data-id="6">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/attack_dog-stay.gif" alt="圖片6" loading="lazy">
+          <div class="caption">動感十足的動物捕捉</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <div class="slide" data-id="7">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/1122007.jpg" alt="圖片7" loading="lazy">
+          <div class="caption">令人心曠神怡的山脈風光</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <div class="slide" data-id="8">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/1122028.jpg" alt="圖片8" loading="lazy">
+          <div class="caption">獨特的建築設計</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <div class="slide" data-id="9">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/FB_IMG_1734678229372_1.jpg" alt="圖片9" loading="lazy">
+          <div class="caption">多彩城市生活</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+      <div class="slide" data-id="10">
+        <div class="slide-content">
+          <div class="slide-loader">
+            <div class="loader"></div>
+          </div>
+          <img src="./assets/IMG_0580.jpg" alt="圖片10" loading="lazy">
+          <div class="caption">壯觀的自然奇觀</div>
+          <div class="danmu-container"></div>
+        </div>
+      </div>
+    </div>
+    <div class="slider-buttons">
+        <button class="slider-button" id="prev">&#10094;</button>
+        <button class="slider-button" id="next">&#10095;</button>
+    </div>
+    <div class="slider-indicators" id="sliderIndicators">
+      <!-- indicators will be added by JS -->
+    </div>
+    
+    <!-- 彈幕速度控制 -->
+    <div class="speed-control">
+      <label for="danmuSpeed">彈幕速度:</label>
+      <input type="range" id="danmuSpeed" min="5" max="20" value="10">
+    </div>
+    
+    <!-- 留言區選項卡 -->
+    <div class="tab-buttons" id="slideTabButtons">
+      <!-- 這裡由JavaScript自動生成 -->
+    </div>
+  </div>
+ 
+<div class="comments">
+  <h2>留言區 - <span id="currentSlideTitle">圖片 1</span></h2>
+  <div class="comment-input">
+    <input type="text" id="usernameInput" class="username-input" placeholder="您的名稱..." maxlength="20">
+    <textarea id="commentText" placeholder="請輸入留言..."></textarea>
+    <div class="comment-buttons">
+      <button id="submitComment">送出留言</button>
+      <button id="submitDanmu" class="danmu-btn">發送彈幕</button>
+    </div>
+  </div>
+  <div class="comment-list" id="commentList">
+    <!-- 這裡會顯示當前圖片的留言 -->
+  </div>
+</div>
+
+<footer>
+  &copy; 人生大腸包小腸，裕陽大帥哥
+</footer>
+
+<script>
+   $(function() {
+  // 頁面初始化
+  function initPages() {
+    // 直接獲取header和footer元素
+    const header = $('header');
+    const footer = $('footer');
+    
+    // 創建主頁面容器
+    const pagesContainer = $('<div class="pages-container"></div>');
+    
+    // 將pages-container插入在header和footer之間
+    header.after(pagesContainer);
+    
+    // 創建主頁頁面並移動內容
+    const homePage = $('<div class="page" id="home-page"></div>');
+    $('.slider').detach().appendTo(homePage);
+    $('.comments').detach().appendTo(homePage);
+    
+    // 將home-page添加到pages-container
+    pagesContainer.append(homePage);
+    
+    // 創建其他頁面
+    pagesContainer.append(`
+      <div class="page" id="album-page">
+          <div id="article" class="fs-medium ff-mp2-regular">
+        <h2>相簿集</h2>
+        <div class="album-grid"></div>
+        </div>
+      </div>
+      <div class="page" id="upload-page">
+        <h2>上傳圖片</h2>
+        <div class="upload-container">
+          <div class="upload-preview">
+            <img id="preview-image" src="/api/placeholder/400/300" alt="預覽圖">
+          </div>
+          <form id="upload-form">
+            <input type="file" id="image-upload" accept="image/*">
+            <input type="text" placeholder="圖片標題" id="image-title">
+            <textarea placeholder="圖片描述" id="image-description"></textarea>
+            <button type="submit" class="upload-button">上傳</button>
+          </form>
+        </div>
+      </div>
+      <div class="page" id="about-page">
+        <div id="article" class="fs-medium ff-mp2-regular">
+        
+        
+        <div class="row row1">
+            <div class="box box1">
+                <div class="grid-container3">
+                    <div class="grid-item photo2A">
+                        <img class="filter-image1" src="./assets/P_20240614_210427.jpg">
+                    </div>
+                 
+                    <div class=" grid-item photo3A">
+                        <img class="filter-image1" src="./assets/1122028.jpg">
+                        
+                    </div>
+                   
+                </div>
+                <div class="grid-container4">
+                    <div class="grid-item photo2A">
+                        <img class="filter-image1" src="./assets/124.png">
+                    </div>
+                 
+                    <div class=" grid-item photo1A">
+                        <img class="filter-image1" src="./assets/123.png">
+                        
+                    </div>
+                   
+                </div>
+            </div>
+            
+            <div class="box box2"> 
+             
+                
+                
+                
+                    <h1>關於我們</h1>
+                    <div class="inbox_text">
+                    <div class="box-info">
+                      <h1 class="fs-xl">創立背景</h1>
+                      <p class="box-info ff-mp2-regular fs-large">風視颱情的成立可追溯到1972年，當時颱風侵襲台灣頻繁，對居民生活和經濟造成了巨大影響。創辦人心有羅博士，一位傑出的氣象學家，意識到台灣急需一個專門研究和預測颱風的團隊，以提高防災能力和減少損失。在他的號召下，一群志同道合的專家聚集在一起，成立了風視颱情。
+                    </p>
+                            <h1 class="fs-xl">初期發展</h1>
+                            <p class="box-info fs-large"> 在創立初期，風視颱情只有十多名成員，他們來自不同的領域，包括氣象學、海洋學和地理學。他們利用有限的資源，開始建立台灣第一個颱風資料庫，記錄每一次颱風的路徑、強度和影響。同時，他們也與國際氣象機構合作，引進先進的預測技術和設備。
+                            </p>
+                            <h1 class="fs-xl">技術突破</h1>
+                            <p class="box-info fs-large">  1980年代，風視颱情在技術上取得了重大突破。團隊引進了當時最先進的雷達系統和衛星數據處理技術，大大提高了颱風預測的準確性和時效性。他們還開發了自主研發的颱風預測模型，使得預測範圍從48小時延長到72小時，為防災部署贏得了寶貴的時間。
+                            </p>
+                            <h1 class="fs-xl">社會影響</h1>
+                            <p class="box-info fs-large"> 隨著預測準確性的提高，風視颱情逐漸贏得了社會的信任。1987年，團隊成功預測了颱風艾妮的路徑，避免了可能造成的大規模災難。此後，風視颱情成為台灣政府和民眾防颱的重要依靠。他們不僅提供颱風預報，還開展防災教育，普及防颱知識，提高民眾的應變能力。
+                            </p>
+                            <h1 class="fs-xl">國際合作</h1>
+                            <p class="box-info fs-large">進入1990年代，風視颱情開始加強國際合作。他們與日本、美國和菲律賓等國家的氣象機構建立了緊密的合作關係，共享數據和研究成果。2001年，風視颱情成為世界氣象組織（WMO）的正式成員，參與國際颱風研究和預測計畫，進一步提升了台灣在全球氣象界的影響力。
+                            </p>
+                            <h1 class="fs-xl">現代化轉型</h1>
+                            <p class="box-info fs-large">2010年，風視颱情進行了全面的現代化轉型。他們引入了人工智慧和大數據技術，開發出新一代的颱風預測模型，預測準確度達到了前所未有的高度。同時，團隊還建立了24小時運作的颱風監測中心，確保能夠即時應對任何突發情況。
+                            </p>
+                            <h1 class="fs-xl">當前發展</h1>
+                            <p class="box-info fs-large"> 如今，風視颱情已經成為一個擁有數百名專家的國際頂尖颱風研究團隊。他們不僅致力於颱風預測，還在氣候變遷研究、防災減災技術和環境保護等領域取得了豐碩成果。團隊的研究報告和預測被世界各國廣泛引用，為全球颱風防災工作做出了巨大貢獻。
+                            </p>
+                            <h1 class="fs-xl">展望未來</h1>
+                            <p class="box-info fs-large"> 風視颱情未來的目標是進一步提高颱風預測的準確性和時效性，並加強對極端天氣事件的研究。他們計劃與更多國際機構合作，開展跨領域的綜合研究，為全球氣象學和防災減災事業貢獻更多智慧和力量。
+                            </p>
+                        </div>
+                    </div>
+                     
+                
+                
+            </div>
+          </div>
+        <div class="ppap"><div class="member-info-title paps">成員名單</div></div> 
+            <div class="imgbg">
+                <img src="assets/logo.png" alt="Rotating Image " >
+            </div>
+ 
+           
+            
+            <div class="grid-container2">
+                <div class="grid-item photo1">
+                    <img class="filter-image" src="./assets/1122028.jpg">
+                    <div class="member-info">
+                        <div class="member-info-title fs-xl">Chris 1</div>
+                        <div class="member-info-des fs-medium">1122028 林家駿</div>
+                    </div>
+                </div>
+                
+               
+                <div class=" grid-item photo1">
+                    <img class="filter-image" src="./assets/1122002.jpg">
+                    <div class="member-info">
+                        <div class="member-info-title fs-xl">Wilson</div>
+                        <div class="member-info-des fs-medium">1122002 陳昱洋</div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid-container2">
+                <div class="grid-item photo1">
+                    <img class="filter-image" src="./assets/1122016.jpg">
+                    <div class="member-info">
+                        <div class="member-info-title fs-xl">Chris 2</div>
+                        <div class="member-info-des fs-medium">1122016 黃昱瀚</div>
+                    </div>
+                </div>
+             
+                <div class=" grid-item photo1">
+                    <img class="filter-image" src="./assets/1122026.jpg">
+                    <div class="member-info">
+                        <div class="member-info-title fs-xl">Fresh man</div>
+                        <div class="member-info-des fs-medium">1122026 許晉榮</div>
+                    </div>
+                </div>
+            </div>
+       
+            <svg>
+                <defs>
+                    <filter id=" crumple-effect-1">
+                    <feTurbulence id="turbulence" type="fractalNoise" baseFrequency="0.1" numOctaves="5" result="turbulence">
+                        <animate attributeName="baseFrequency" values="0.1;0.3;0.6;1.0" keyTimes="0;0.5;0.75;1" dur="15s" repeatCount="indefinite" />
+                    </feTurbulence>
+                    <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="0">
+                        <animate attributeName="scale" values="0;20;50;100" keyTimes="0;0.5;0.75;1" dur="60s" repeatCount="indefinite" />
+                    </feDisplacementMap>
+                    </filter>
+            
+                    <filter id="crumple-effect-2">
+                        <feTurbulence id="turbulence" type="fractalNoise" baseFrequency="0.02" numOctaves="5" result="turbulence">
+                            <animate attributeName="baseFrequency" values="0.1;0.2" keyTimes="0;1" dur="10s" repeatCount="indefinite" />
+                        </feTurbulence>
+                        <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="0">
+                            <animate attributeName="scale" values="30;60" keyTimes="0;1" dur="10s" repeatCount="indefinite" />
+                        </feDisplacementMap>
+                    </filter>
+            
+                    <filter id="crumple-effect-3">
+                        <feTurbulence id="turbulence" type="fractalNoise" baseFrequency="0.02" numOctaves="5" result="turbulence">
+                            <animate attributeName="baseFrequency" values="0.6;0.3;0.2;0.1" keyTimes="0;0.5;0.75;1" dur="15s" repeatCount="indefinite" />
+                        </feTurbulence>
+                        <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="0">
+                            <animate attributeName="scale" values="0;50;75;100" keyTimes="0;0.5;0.75;1" dur="60s" repeatCount="indefinite" />
+                        </feDisplacementMap>
+                    </filter>
+            
+                    </defs>
+                    </svg>
+    </div>
+      </div>
+    `);
+    
+    // 隱藏非首頁內容
+    $('.page:not(#home-page)').hide();
+  }
+  
+  // 初始化相簿頁面
+  function initAlbumPage() {
+    const albumGrid = $('.album-grid');
+    
+    // 使用幻燈片中的圖片填充相簿
+    $('.slide').each(function() {
+      const slideId = $(this).data('id');
+      const imgSrc = $(this).find('img').attr('src');
+      const caption = $(this).find('.caption').text();
+      
+      albumGrid.append(`
+        <div class="album-item" data-id="${slideId}">
+          <img src="${imgSrc}" alt="${caption}">
+          <div class="album-caption">${caption}</div>
+        </div>
+      `);
+    });
+    
+    // 點擊相簿項目打開大圖
+    $(document).on('click', '.album-item', function() {
+      const imgSrc = $(this).find('img').attr('src');
+      const slideId = $(this).data('id');
+      
+      // 創建全屏預覽
+      if ($('.fullscreen-preview').length === 0) {
+        $('body').append(`
+          <div class="fullscreen-preview">
+            <img src="${imgSrc}" alt="全屏預覽">
+            <div class="close-preview">&times;</div>
+            <div class="preview-comments"></div>
+          </div>
+        `);
+      } else {
+        $('.fullscreen-preview img').attr('src', imgSrc);
+      }
+      
+      // 加載評論
+      const previewComments = $('.preview-comments');
+      previewComments.empty();
+      
+      // 這裡假設comments是全局變量
+      if (comments[slideId] && comments[slideId].length > 0) {
+        comments[slideId].forEach(comment => {
+          previewComments.append(`
+            <div class="comment-item">
+              <span class="username">${comment.username || '匿名'}:</span>
+              ${comment.text}
+            </div>
+          `);
+        });
+      } else {
+        previewComments.append('<div class="comment-item">暫無留言</div>');
+      }
+      
+      // 顯示預覽
+      $('.fullscreen-preview').addClass('active');
+    });
+    
+    // 關閉全屏預覽
+    $(document).on('click', '.close-preview, .fullscreen-preview', function(e) {
+      if (e.target === this) {
+        $('.fullscreen-preview').removeClass('active');
+      }
+    });
+  }
+  
+  // 初始化上傳功能
+  function initUploadPage() {
+    // 圖片預覽
+    $('#image-upload').on('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          $('#preview-image').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    // 上傳表單提交
+    $('#upload-form').on('submit', function(e) {
+      e.preventDefault();
+      
+      const fileInput = $('#image-upload')[0];
+      const title = $('#image-title').val();
+      const description = $('#image-description').val();
+      
+      if (!fileInput.files[0]) {
+        alert('請選擇一張圖片');
+        return;
+      }
+      
+      if (!title) {
+        alert('請輸入圖片標題');
+        return;
+      }
+      
+      // 模擬上傳成功
+      alert('圖片上傳成功！（此為示範，實際上傳功能需要後端支持）');
+      
+      // 重置表單
+      this.reset();
+      $('#preview-image').attr('src', '/api/placeholder/400/300');
+      
+      // 切換回相簿頁面
+      switchPage('album');
+    });
+  }
+  
+  // 頁面切換系統 (整合到一個地方)
+  function switchPage(pageId) {
+    // 隱藏所有頁面
+    $('.page').hide();
+    // 顯示目標頁面
+    $(`#${pageId}-page`).show();
+    
+    // 更新選單激活狀態
+    $('.menu-item').removeClass('active');
+    $(`.menu-item[data-page="${pageId}"]`).addClass('active');
+    
+    // 關閉漢堡選單（如果是行動裝置）
+    $('.hamburger-menu').removeClass('active');
+  }
+  
+  // 初始化所有功能
+  function init() {
+    // 綁定漢堡選單事件 (使用現有HTML中的選單)
+    $('.hamburger-icon').on('click', function() {
+      $('.hamburger-menu').toggleClass('active');
+    });
+    
+    // 點擊選單項
+    $('.menu-item').on('click', function(e) {
+      e.preventDefault();
+      const pageId = $(this).data('page');
+      switchPage(pageId);
+    });
+    
+    // 初始化頁面結構
+    initPages();
+    
+    // 初始化其他功能
+    initAlbumPage();
+    initUploadPage();
+    
+    // 監聽URL hash變化
+    $(window).on('hashchange', function() {
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        switchPage(hash);
+      }
+    });
+    
+    // 初始檢查URL hash
+    if (window.location.hash) {
+      const hash = window.location.hash.substring(1);
+      switchPage(hash);
+    } else {
+      // 預設顯示首頁
+      switchPage('home');
+    }
+  }
+  
+  // 網站初始化
+  init();
+});
+  // 頁面切換系統
+function switchPage(pageId) {
+  // 隱藏所有頁面
+  $('.page').hide();
+  // 顯示目標頁面
+  $(`#${pageId}-page`).show();
+  
+  // 更新選單激活狀態
+  $('.menu-item').removeClass('active');
+  $(`.menu-item[data-page="${pageId}"]`).addClass('active');
+  
+  // 關閉漢堡選單（如果是行動裝置）
+  if ($(window).width() < 768) {
+    $('.hamburger-menu').removeClass('active');
+  }
+}
+
+// 點擊選單項
+$(document).on('click', '.menu-item', function(e) {
+  e.preventDefault();
+  const pageId = $(this).data('page');
+  switchPage(pageId);
+});
+  $(function() {
+    // 全局變量
+    let currentIndex = 0;
+    const totalSlides = 10;
+    const track = $('.slider-track');
+    let danmuSpeed = 10; // 初始彈幕速度
+    let comments = {}; // 存儲每個幻燈片的留言
+    let danmuColors = ['#FF99CC', '#FFFF99', '#99FF99', '#99CCFF', '#CC99FF', '#FFFFFF']; // 彈幕顏色
+    $(document).ready(function() {
+  // 初始化 dialog
+  $(".slide-content").dialog({
+    autoOpen: false,
+    modal: true,
+    width: 400,
+    title: "圖片說明"
+  });
+
+  // 點擊圖片時開啟 dialog
+  $(".clickable-img").click(function() {
+    var imgSrc = $(this).attr("src");
+    var imgDesc = $(this).data("desc");
+
+    $("#dialog-img").attr("src", imgSrc);
+    $("#dialog-desc").text(imgDesc);
+
+    $("#img-dialog").dialog("open");
+  });
+});
+    // 初始化每個幻燈片的留言數組
+    for (let i = 1; i <= totalSlides; i++) {
+      comments[i] = [];
+    }
+    
+    // 創建指示器
+    for (let i = 0; i < totalSlides; i++) {
+      $('#sliderIndicators').append(`<div class="slider-indicator ${i === 0 ? 'active' : ''}" data-index="${i}"></div>`);
+    }
+    
+    // 創建選項卡按鈕
+   // for (let i = 1; i <= totalSlides; i++) {
+   //   $('#slideTabButtons').append(`<button class="tab-button ${i === 1 ? 'active' : ''}" data-slide="${i}">圖片 ${i}</button>`);
+    //}
+    
+    // 處理圖片載入完成後移除loader
+    $('img').on('load', function() {
+      const slide = $(this).closest('.slide');
+      const loader = slide.find('.slide-loader');
+      // 漸隱後移除
+      loader.fadeOut(300, function() {
+        $(this).remove();
+      });
+    });
+    
+    // 手動觸發已加載的圖片
+    $('img').each(function() {
+      if (this.complete) {
+        $(this).trigger('load');
+      }
+    });
+    
+    // 避免圖片無法載入時卡住，設置超時
+    setTimeout(function() {
+      $('.slide-loader').fadeOut(300);
+    }, 5000);
+    
+    // 更新當前幻燈片
+    function updateSlide(index) {
+      currentIndex = index;
+      track.css('transform', `translateX(-${index * 10}%)`);
+      
+      // 更新標題和留言列表
+      $('#currentSlideTitle').text(`圖片 ${index + 1}`);
+      updateCommentList(index + 1);
+      
+      // 更新選項卡按鈕
+      $('.tab-button').removeClass('active');
+      $(`.tab-button[data-slide="${index + 1}"]`).addClass('active');
+      
+      // 更新指示器
+      $('.slider-indicator').removeClass('active');
+      $(`.slider-indicator[data-index="${index}"]`).addClass('active');
+    }
+    
+    // 點擊下一張
+    $('#next').on('click', function() {
+      updateSlide((currentIndex + 1) % totalSlides);
+    });
+    
+    // 點擊上一張
+    $('#prev').on('click', function() {
+      updateSlide((currentIndex - 1 + totalSlides) % totalSlides);
+    });
+    
+    // 點擊指示器
+    $(document).on('click', '.slider-indicator', function() {
+      const index = $(this).data('index');
+      updateSlide(index);
+    });
+    
+    // 點擊選項卡切換幻燈片
+    $(document).on('click', '.tab-button', function() {
+      const slideIndex = $(this).data('slide') - 1;
+      updateSlide(slideIndex);
+    });
+    
+    // 更新留言列表
+    function updateCommentList(slideId) {
+      const commentList = $('#commentList');
+      commentList.empty();
+      
+      if (comments[slideId] && comments[slideId].length > 0) {
+        comments[slideId].forEach(comment => {
+          commentList.append(`
+            <div class="comment-item">
+              <span class="username">${comment.username || '匿名'}:</span>
+              ${comment.text}
+            </div>
+          `);
+        });
+      } else {
+        commentList.append('<div class="comment-item">暫無留言</div>');
+      }
+    }
+    
+    // 生成彈幕
+    function createDanmu(slideId, text, username) {
+      const container = $(`.slide[data-id="${slideId}"] .danmu-container`);
+      const top = Math.floor(Math.random() * 80) + 5; // 隨機垂直位置 (5%-85%)
+      
+      const color = danmuColors[Math.floor(Math.random() * danmuColors.length)];
+      const duration = 30 - danmuSpeed; // 速度越大，持續時間越短
+      
+      const danmuText = username ? `${username}: ${text}` : text;
+      const danmu = $(`<div class="danmu" style="top: ${top}%; color: ${color}; animation-duration: ${duration}s;">${danmuText}</div>`);
+      
+      container.append(danmu);
+      
+      // 彈幕動畫結束後移除
+      danmu.on('animationend', function() {
+        $(this).remove();
+      });
+    }
+    
+    // 發送留言
+    $('#submitComment').on('click', function() {
+      const text = $('#commentText').val().trim();
+      const username = $('#usernameInput').val().trim();
+      
+      if (text) {
+        const slideId = currentIndex + 1;
+        const newComment = {
+          text: text,
+          username: username || '匿名',
+          timestamp: new Date().getTime()
+        };
+        
+        // 添加到留言數組
+        if (!comments[slideId]) {
+          comments[slideId] = [];
+        }
+        comments[slideId].push(newComment);
+        
+        // 更新顯示
+        updateCommentList(slideId);
+        
+        // 清空輸入框
+        $('#commentText').val('');
+      } else {
+        alert('請輸入留言內容');
+      }
+    });
+    
+    // 發送彈幕
+    $('#submitDanmu').on('click', function() {
+      const text = $('#commentText').val().trim();
+      const username = $('#usernameInput').val().trim();
+      
+      if (text) {
+        const slideId = currentIndex + 1;
+        
+        // 添加到留言數組
+        if (!comments[slideId]) {
+          comments[slideId] = [];
+        }
+        comments[slideId].push({
+          text: text,
+          username: username || '匿名',
+          timestamp: new Date().getTime()
+        });
+        
+        // 生成彈幕
+        createDanmu(slideId, text, username);
+        
+        // 更新顯示
+        updateCommentList(slideId);
+        
+        // 清空輸入框
+        $('#commentText').val('');
+      } else {
+        alert('請輸入彈幕內容');
+      }
+    });
+    
+    // 彈幕速度控制
+    $('#danmuSpeed').on('input', function() {
+      danmuSpeed = $(this).val();
+    });
+    
+    // 自動播放彈幕
+    function autoPlayDanmu() {
+      // 只在當前幻燈片播放彈幕
+      const slideId = currentIndex + 1;
+      
+      if (comments[slideId] && comments[slideId].length > 0) {
+        const randomIndex = Math.floor(Math.random() * comments[slideId].length);
+        const comment = comments[slideId][randomIndex];
+        createDanmu(slideId, comment.text, comment.username);
+      }
+      
+      // 隨機時間後再次顯示
+      const timeout = Math.random() * 3000 + 1000;
+      setTimeout(autoPlayDanmu, timeout);
+    }
+    
+    // 初始化頁面
+    updateSlide(0);
+    
+    // 模擬一些示例留言和彈幕
+    const sampleComments = [
+      { slideId: 1, text: "這張照片真漂亮！", username: "用戶A" },
+      { slideId: 1, text: "好美的風景！", username: "用戶B" },
+      { slideId: 2, text: "這是在哪裡拍的？", username: "攝影愛好者" },
+      { slideId: 3, text: "色彩很鮮艷！", username: "設計師" }
+    ];
+    
+    sampleComments.forEach(comment => {
+      if (!comments[comment.slideId]) {
+        comments[comment.slideId] = [];
+      }
+      comments[comment.slideId].push({
+        text: comment.text,
+        username: comment.username,
+        timestamp: new Date().getTime()
+      });
+    });
+    
+    updateCommentList(1);
+    
+    // 立即觸發一些彈幕
+    setTimeout(function() {
+      if (comments[1] && comments[1].length > 0) {
+        comments[1].forEach(comment => {
+          setTimeout(function() {
+            createDanmu(1, comment.text, comment.username);
+          }, Math.random() * 2000);
+        });
+      }
+    }, 1000);
+    
+    // 開始自動播放彈幕
+    setTimeout(autoPlayDanmu, 3000);
+    
+    // 按Enter鍵發送留言
+    $('#commentText').on('keydown', function(e) {
+      if (e.keyCode === 13 && !e.shiftKey) {
+        e.preventDefault();
+        $('#submitComment').click();
+      }
+    });
+    
+    // 儲存留言數據到本地存儲
+    function saveComments() {
+      localStorage.setItem('siteComments', JSON.stringify(comments));
+    }
+    
+    // 從本地存儲載入留言數據
+    function loadComments() {
+      const saved = localStorage.getItem('siteComments');
+      if (saved) {
+        comments = JSON.parse(saved);
+        updateCommentList(currentIndex + 1);
+      }
+    }
+    
+    // 嘗試載入已保存的留言
+    loadComments();
+    
+    // 定時保存留言
+    setInterval(saveComments, 30000);
+  });
+</script>
+
+</body>
+</html>
